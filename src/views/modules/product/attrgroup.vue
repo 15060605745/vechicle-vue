@@ -2,14 +2,15 @@
   <div>
     <el-row :gutter="20">
       <el-col :span="8">
-        <el-tree
+        <!-- <el-tree
           :data="dataTree"
           :props="defaultProps"
           :expand-on-click-node="false"
           node-key="catId"
           ref="tree"
           @node-click="nodeClick"
-        ></el-tree>
+        ></el-tree>-->
+        <category @tree-node-click="treenodeclick"></category>
       </el-col>
       <el-col :span="14">
         <div class="mod-config">
@@ -19,10 +20,8 @@
             </el-form-item>
             <el-form-item>
               <el-button @click="getDataList()">查询</el-button>
-              <el-button
-                type="primary"
-                @click="addOrUpdateHandle()"
-              >新增</el-button>
+              <el-button type="success" @click="getAllDataList()">查询全部</el-button>
+              <el-button type="primary" @click="addOrUpdateHandle()">新增</el-button>
               <el-button
                 type="danger"
                 @click="deleteHandle()"
@@ -55,6 +54,11 @@
                 <el-button
                   type="text"
                   size="small"
+                  @click="relationHandle(scope.row.attrGroupId)"
+                >关联</el-button>
+                <el-button
+                  type="text"
+                  size="small"
                   @click="addOrUpdateHandle(scope.row.attrGroupId)"
                 >修改</el-button>
                 <el-button type="text" size="small" @click="deleteHandle(scope.row.attrGroupId)">删除</el-button>
@@ -72,6 +76,8 @@
           ></el-pagination>
           <!-- 弹窗, 新增 / 修改 -->
           <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" @refreshDataList="getDataList"></add-or-update>
+          <!-- 修改关联关系 -->
+          <relation-update v-if="relationVisible" ref="relationUpdate" @refreshData="getDataList"></relation-update>
         </div>
       </el-col>
     </el-row>
@@ -80,6 +86,8 @@
 
 <script>
 import AddOrUpdate from "./attrgroup-add-or-update";
+import RelationUpdate from "./attr-group-relation";
+import Category from "../common/category";
 export default {
   data() {
     return {
@@ -99,10 +107,13 @@ export default {
       },
       dataTree: [],
       catId: 0,
+      relationVisible: false,
     };
   },
   components: {
     AddOrUpdate,
+    RelationUpdate,
+    Category,
   },
   activated() {
     this.getDataList();
@@ -209,6 +220,28 @@ export default {
       if (data.catLevel == 3) {
         this.catId = data.catId;
         this.getDataList();
+      }
+    },
+
+    //全部查询
+    getAllDataList() {
+      this.catId = 0;
+      this.getDataList();
+    },
+
+    //处理分组与属性的关联
+    relationHandle(groupId) {
+      this.relationVisible = true;
+      this.$nextTick(() => {
+        this.$refs.relationUpdate.init(groupId);
+      });
+    },
+
+    //感知树节点被点击
+    treenodeclick(data, node, component) {
+      if (node.level == 3) {
+        this.catId = data.catId;
+        this.getDataList(); //重新查询
       }
     },
   },
